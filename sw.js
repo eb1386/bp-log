@@ -1,4 +1,4 @@
-const CACHE = 'bp-log-v4';
+const CACHE = 'bp-log-v5';
 const FILES = ['./', 'index.html', 'jspdf.umd.min.js', 'manifest.webmanifest', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -10,7 +10,8 @@ self.addEventListener('activate', (e) => {
 // Pages: network first so updates show up immediately, cache when offline.
 // Everything else: cache first, refreshed in the background.
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
+  const url = new URL(e.request.url);
+  if (e.request.method !== 'GET' || url.origin !== location.origin || url.pathname.startsWith('/api/')) return;
   if (e.request.mode === 'navigate') {
     e.respondWith(caches.open(CACHE).then((c) =>
       fetch(e.request).then((r) => { if (r.ok) c.put('index.html', r.clone()); return r; })

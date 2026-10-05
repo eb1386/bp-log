@@ -193,10 +193,26 @@ input[type="datetime-local"]::-webkit-date-and-time-value { text-align: left; }
 .stats .v { font-size: 26px; font-weight: 800; margin-top: 6px; }
 .stats .v small { font-size: 13px; color: var(--muted); font-weight: 700; }
 
-.chart { padding: 16px 12px 10px; }
-.chart svg { display: block; width: 100%; height: 190px; overflow: visible; }
-.legend { display: flex; gap: 18px; justify-content: center; font-size: 13px; font-weight: 700; color: var(--muted); margin-top: 6px; }
-.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.chart { padding: 16px 12px 8px; }
+#chart { display: block; width: 100%; height: 200px; overflow: visible; touch-action: pan-y; cursor: pointer; }
+.chead { display: flex; justify-content: space-between; align-items: center; padding: 2px 8px 12px; }
+.chead .u { font-size: 12px; font-weight: 800; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
+.legend { display: flex; gap: 14px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+.cdetail { padding: 14px 8px 0; min-height: 40px; }
+.cdetail .dt { font-size: 17px; font-weight: 800; }
+.cdetail .ds { font-size: 13px; font-weight: 700; color: var(--muted); margin-top: 3px; }
+.chips {
+  display: flex; gap: 12px; overflow-x: auto;
+  margin: 0 -12px; padding: 16px 12px 18px;
+  scroll-snap-type: x proximity; scrollbar-width: none;
+}
+.chips::-webkit-scrollbar { display: none; }
+.cp { flex: none; scroll-snap-align: start; min-width: 100px; padding: 10px 14px; border-radius: 16px; box-shadow: var(--raise-sm); }
+.cp .ct { font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.cp .cv { font-size: 21px; font-weight: 800; margin-top: 3px; }
+.cp .cpu { font-size: 13px; font-weight: 700; color: var(--muted); margin-top: 2px; }
+.cp .cpu svg { width: 11px; height: 11px; margin-right: 3px; vertical-align: -1px; }
 
 .day { font-size: 14px; font-weight: 800; color: var(--muted); margin: 26px 6px 12px; letter-spacing: .02em; }
 .day:first-child { margin-top: 4px; }
@@ -262,14 +278,34 @@ input[type="datetime-local"]::-webkit-date-and-time-value { text-align: left; }
 .item .p svg { width: 13px; height: 13px; vertical-align: -1px; margin-right: 3px; }
 .empty { text-align: center; color: var(--muted); font-weight: 700; padding: 40px 0; }
 
-.backup { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 30px; }
-.backup .btn { height: 56px; font-size: 16px; color: var(--accent); position: relative; }
-.backup .btn svg { width: 20px; height: 20px; }
-.backup .btn.due::after {
-  content: ""; position: absolute; top: 12px; right: 14px;
-  width: 9px; height: 9px; border-radius: 50%; background: var(--accent);
+/* account */
+.me {
+  width: 50px; height: 50px; border-radius: 50%; flex: none; position: relative;
+  box-shadow: var(--raise-sm); font-size: 20px; font-weight: 800; color: var(--accent);
+  transition: box-shadow .15s;
 }
-.bk-when { text-align: center; color: var(--muted); font-size: 13px; font-weight: 700; margin-top: 14px; }
+.me:active { box-shadow: var(--inset-sm); }
+.me.pending::after {
+  content: ""; position: absolute; top: 2px; right: 2px;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--muted); border: 2px solid var(--bg);
+}
+.welcome {
+  position: fixed; inset: 0; z-index: 40; background: var(--bg);
+  display: flex; justify-content: center; align-items: flex-start;
+  padding: calc(env(safe-area-inset-top) + 11vh) 28px 0;
+}
+.welcome[hidden] { display: none; }
+.wbox { width: 100%; max-width: 380px; text-align: center; animation: fade .3s ease; }
+.logo {
+  width: 96px; height: 96px; border-radius: 50%; margin: 0 auto 34px;
+  display: grid; place-items: center; box-shadow: var(--raise); color: var(--accent);
+}
+.logo svg { width: 46px; height: 46px; }
+.wbox h1 { margin-bottom: 26px; font-size: 28px; }
+.wbox .field { height: 64px; text-align: center; font-size: 21px; font-weight: 700; }
+.wbox .btn { margin-top: 22px; }
+.btn:disabled { opacity: .6; }
 
 /* tab bar */
 nav.tabs {
@@ -335,6 +371,7 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
         <h1>Blood Pressure</h1>
         <div class="sub" id="today"></div>
       </div>
+      <button class="me" id="me" aria-label="Account"></button>
     </header>
 
     <div class="card">
@@ -384,30 +421,21 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
 
     <div id="histBody">
       <div class="card stats">
-        <div><div class="k">AVERAGE</div><div class="v" id="avgBp">–</div></div>
+        <div><div class="k">BLOOD PRESSURE</div><div class="v" id="avgBp">–</div></div>
         <div><div class="k">PULSE</div><div class="v" id="avgP">–</div></div>
         <div><div class="k">COUNT</div><div class="v" id="cnt">0</div></div>
       </div>
       <div class="card chart" id="chartCard">
+        <div class="chead">
+          <span class="u" id="cunit"></span>
+          <span class="legend"><span><i style="background:var(--accent)"></i>SYS</span><span><i style="background:var(--dia)"></i>DIA</span></span>
+        </div>
         <svg id="chart" preserveAspectRatio="none"></svg>
-        <div class="legend"><span><i style="background:var(--accent)"></i>Systolic</span><span><i style="background:var(--dia)"></i>Diastolic</span></div>
+        <div class="cdetail" id="cdetail"></div>
       </div>
       <div id="list"></div>
     </div>
     <div class="empty" id="empty" hidden>No readings</div>
-
-    <div class="backup">
-      <button class="btn" id="bk-save">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>
-        Backup
-      </button>
-      <button class="btn" id="bk-load">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>
-        Restore
-      </button>
-    </div>
-    <div class="bk-when" id="bk-when"></div>
-    <input type="file" id="bk-file" accept="application/json,.json" hidden>
   </section>
 </main>
 
@@ -446,6 +474,24 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
   <div class="acts">
     <button class="btn" id="cf-no">Cancel</button>
     <button class="btn danger-fill" id="cf-yes">Delete</button>
+  </div>
+</div>
+
+<div class="confirm" id="acct" role="dialog" aria-modal="true" aria-labelledby="a-name">
+  <h2 id="a-name"></h2>
+  <p id="a-stat"></p>
+  <div class="acts">
+    <button class="btn" id="a-out">Sign out</button>
+    <button class="btn primary" id="a-close">Done</button>
+  </div>
+</div>
+
+<div class="welcome" id="welcome" hidden>
+  <div class="wbox">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg></div>
+    <h1>What's your name?</h1>
+    <input class="field" id="w-name" type="text" autocomplete="name" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="go" maxlength="40" aria-label="Your name">
+    <button class="btn primary" id="w-go">Continue</button>
   </div>
 </div>
 
@@ -579,7 +625,8 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
     const { sys, dia, pul, bad } = readFields('');
     if (bad.length) return flag('', bad);
     const t = whenTouched ? (fromLocalInput(when.value) ?? Date.now()) : Date.now();
-    readings.push({ id: uid(), t, sys, dia, pulse: pul, note: $('#note').value.trim() });
+    const r = { id: uid(), t, sys, dia, pulse: pul, note: $('#note').value.trim() };
+    readings.push(r); change(r);
     persist();
     ['#sys', '#dia', '#pul', '#note'].forEach((s) => ($(s).value = ''));
     document.activeElement && document.activeElement.blur();
@@ -607,7 +654,11 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
       renderHist();
     });
   });
-  const inRange = () => (range ? readings.filter((r) => r.t >= Date.now() - range * DAY) : readings.slice());
+  function rangeStart() {
+    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (range - 1));
+    return d.getTime();
+  }
+  const inRange = () => (range ? readings.filter((r) => r.t >= rangeStart()) : readings.slice());
   const avg = (a) => Math.round(a.reduce((s, x) => s + x, 0) / a.length);
 
   function renderHist() {
@@ -651,38 +702,120 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
     $$('#list .rec').forEach((x) => x.classList.toggle('open', x.dataset.id === openId));
   });
 
+  // ---------- chart: one column per day / week / month; tap or drag to see that period's readings ----------
+  const CL = 30, CR = 4;
+  const fWd = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
+  const fMd = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
+  const fMon = new Intl.DateTimeFormat(undefined, { month: 'short' });
+  const fMonYs = new Intl.DateTimeFormat(undefined, { month: 'short', year: '2-digit' });
+  const fMonY = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
+  const fWdTime = new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+  const fMdTime = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  let chartModel = null, chartSel = null;
+
+  function buildSlots(rs) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const first = new Date(range ? rangeStart() : (rs.length ? rs[rs.length - 1].t : Date.now()));
+    first.setHours(0, 0, 0, 0);
+    const days = Math.round((today - first) / DAY) + 1;
+    const unit = days <= 31 ? 'day' : days <= 190 ? 'week' : 'month';
+    const d = new Date(first);
+    if (unit === 'week') d.setDate(d.getDate() - d.getDay());
+    if (unit === 'month') d.setDate(1);
+    const slots = [];
+    while (d <= today) {
+      const s0 = d.getTime();
+      if (unit === 'day') d.setDate(d.getDate() + 1);
+      else if (unit === 'week') d.setDate(d.getDate() + 7);
+      else d.setMonth(d.getMonth() + 1);
+      slots.push({ s: s0, e: d.getTime(), items: [] });
+    }
+    for (const r of rs) { const sl = slots.find((x) => r.t >= x.s && r.t < x.e); if (sl) sl.items.unshift(r); }
+    const multiYear = slots.length && new Date(slots[0].s).getFullYear() !== today.getFullYear();
+    return { unit, slots, multiYear };
+  }
+
   function renderChart(rs) {
     const svg = $('#chart');
-    const pts = rs.slice().reverse();
-    $('#chartCard').hidden = pts.length < 2;
-    if (pts.length < 2) return;
-    const W = Math.max(svg.clientWidth || 360, 200), H = 190;
+    const m = (chartModel = buildSlots(rs));
+    const { slots, unit } = m;
+    $('#cunit').textContent = { day: 'By day', week: 'By week', month: 'By month' }[unit];
+    if (!slots.some((x) => x.s === chartSel && x.items.length)) {
+      const last = [...slots].reverse().find((x) => x.items.length);
+      if (!slots.some((x) => x.s === chartSel)) chartSel = last ? last.s : null;
+    }
+    const W = Math.max(svg.clientWidth || 360, 200), H = 200, T = 8, B = 26;
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    const L = 34, R = 10, T = 10, B = 14;
-    const t0 = pts[0].t, t1 = pts[pts.length - 1].t;
-    let lo = Math.min(...pts.map((p) => p.dia)), hi = Math.max(...pts.map((p) => p.sys));
+    let lo = Math.min(...rs.map((p) => p.dia)), hi = Math.max(...rs.map((p) => p.sys));
     lo = Math.floor((lo - 8) / 10) * 10; hi = Math.ceil((hi + 8) / 10) * 10;
-    const x = (t) => L + (t1 === t0 ? 0.5 : (t - t0) / (t1 - t0)) * (W - L - R);
     const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
-    const line = (k) => pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p[k]).toFixed(1)}`).join('');
-    const band = line('sys') + pts.slice().reverse().map((p) => `L${x(p.t).toFixed(1)},${y(p.dia).toFixed(1)}`).join('') + 'Z';
-    const step = (hi - lo) > 80 ? 40 : 20;
+    const n = slots.length, cw = (W - CL - CR) / n;
     let g = '';
+    const step = hi - lo > 80 ? 40 : 20;
     for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) {
-      g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--lo)" stroke-width="1" opacity=".7"/>
-            <text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" font-weight="700" fill="var(--muted)">${v}</text>`;
+      g += `<line x1="${CL}" x2="${W - CR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--lo)" stroke-width="1" opacity=".7"/>
+            <text x="${CL - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" font-weight="700" fill="var(--muted)">${v}</text>`;
     }
     [120, 80].forEach((v) => {
-      if (v > lo && v < hi) g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4 4" opacity=".6"/>`;
+      if (v > lo && v < hi) g += `<line x1="${CL}" x2="${W - CR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4 4" opacity=".6"/>`;
     });
-    const r = pts.length > 40 ? 0 : 3.2;
-    const dots = (k, col) => r ? pts.map((p) => `<circle cx="${x(p.t).toFixed(1)}" cy="${y(p[k]).toFixed(1)}" r="${r}" fill="var(--bg)" stroke="${col}" stroke-width="2.2"/>`).join('') : '';
-    svg.innerHTML = g +
-      `<path d="${band}" fill="var(--accent)" opacity=".08"/>` +
-      `<path d="${line('sys')}" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>` +
-      `<path d="${line('dia')}" fill="none" stroke="var(--dia)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>` +
-      dots('sys', 'var(--accent)') + dots('dia', 'var(--dia)');
+    const bw = Math.max(4, Math.min(cw * 0.5, 16)), dr = Math.max(2.2, Math.min(cw * 0.16, 4));
+    slots.forEach((sl, i) => {
+      const cx = CL + (i + 0.5) * cw, on = sl.s === chartSel;
+      if (on) g += `<rect x="${CL + i * cw + 1}" y="${T - 4}" width="${Math.max(cw - 2, 2)}" height="${H - T - B + 8}" rx="${Math.min(10, cw / 2)}" fill="var(--lo)" opacity=".45"/>`;
+      if (!sl.items.length) return;
+      const top = y(Math.max(...sl.items.map((r) => r.sys))), bot = y(Math.min(...sl.items.map((r) => r.dia)));
+      g += `<rect x="${cx - bw / 2}" y="${top - bw / 2}" width="${bw}" height="${bot - top + bw}" rx="${bw / 2}" fill="var(--accent)" opacity="${on ? 0.24 : 0.12}"/>`;
+      for (const r of sl.items) g += `<circle cx="${cx}" cy="${y(r.sys)}" r="${dr}" fill="var(--accent)"/><circle cx="${cx}" cy="${y(r.dia)}" r="${dr}" fill="var(--dia)"/>`;
+    });
+    const every = Math.ceil(n / Math.max(2, Math.floor((W - CL - CR) / 56)));
+    slots.forEach((sl, i) => {
+      if ((n - 1 - i) % every) return;
+      const d = new Date(sl.s), on = sl.s === chartSel;
+      const txt = unit === 'day' ? (n <= 7 ? fWd.format(d) : fMd.format(d)) : unit === 'week' ? fMd.format(d) : (m.multiYear ? fMonYs.format(d) : fMon.format(d));
+      g += `<text x="${CL + (i + 0.5) * cw}" y="${H - 6}" text-anchor="middle" font-size="11" font-weight="${on ? 800 : 700}" fill="${on ? 'var(--accent)' : 'var(--muted)'}">${txt}</text>`;
+    });
+    svg.innerHTML = g;
+    renderDetail();
   }
+
+  function renderDetail() {
+    const box = $('#cdetail');
+    const sl = chartModel && chartModel.slots.find((x) => x.s === chartSel);
+    if (!sl) { box.innerHTML = ''; return; }
+    const u = chartModel.unit;
+    const title = u === 'day' ? dayLabel(sl.s)
+      : u === 'week' ? `${fMd.format(sl.s)} – ${fMd.format(sl.e - 1)}`
+      : fMonY.format(sl.s);
+    const it = sl.items;
+    if (!it.length) { box.innerHTML = `<div class="dt">${title}</div><div class="ds">No readings</div>`; return; }
+    let sub = `${it.length} reading${it.length > 1 ? 's' : ''}`;
+    if (it.length > 1) {
+      const by = (a, b) => a.sys - b.sys || a.dia - b.dia;
+      const hiR = it.reduce((a, r) => (by(r, a) > 0 ? r : a)), loR = it.reduce((a, r) => (by(r, a) < 0 ? r : a));
+      sub += ` · Highest ${hiR.sys}/${hiR.dia} · Lowest ${loR.sys}/${loR.dia}`;
+    }
+    const tf = u === 'day' ? fTime : u === 'week' ? fWdTime : fMdTime;
+    box.innerHTML = `<div class="dt">${title}</div><div class="ds">${sub}</div><div class="chips">` +
+      it.map((r) => `<div class="cp"><div class="ct">${tf.format(r.t)}</div><div class="cv">${r.sys}/${r.dia}</div>${r.pulse ? `<div class="cpu">${heart}${r.pulse}</div>` : ''}</div>`).join('') +
+      `</div>`;
+  }
+
+  (() => {
+    const svg = $('#chart'); let down = false;
+    const pick = (e) => {
+      if (!chartModel || !chartModel.slots.length) return;
+      const b = svg.getBoundingClientRect(), W = svg.viewBox.baseVal.width || b.width, n = chartModel.slots.length;
+      const x = (e.clientX - b.left) * (W / b.width);
+      const i = Math.max(0, Math.min(n - 1, Math.floor((x - CL) / ((W - CL - CR) / n))));
+      const s0 = chartModel.slots[i].s;
+      if (s0 !== chartSel) { chartSel = s0; renderChart(inRange()); }
+    };
+    svg.addEventListener('pointerdown', (e) => { down = true; pick(e); });
+    svg.addEventListener('pointermove', (e) => { if (down) pick(e); });
+    addEventListener('pointerup', () => (down = false));
+    addEventListener('pointercancel', () => (down = false));
+  })();
 
   // ---------- edit sheet ----------
   let editing = null, deleting = null;
@@ -696,7 +829,8 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
   }
   function closeSheet() {
     document.activeElement && document.activeElement.blur();
-    $('#scrim').classList.remove('on'); $('#sheet').classList.remove('on'); $('#confirm').classList.remove('on');
+    $('#scrim').classList.remove('on');
+    ['#sheet', '#confirm', '#acct'].forEach((x) => $(x).classList.remove('on'));
     editing = null; deleting = null;
   }
   $('#e-cancel').addEventListener('click', closeSheet);
@@ -710,7 +844,8 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
   $('#cf-no').addEventListener('click', closeSheet);
   $('#cf-yes').addEventListener('click', () => {
     if (!deleting) return;
-    readings = readings.filter((x) => x !== deleting);
+    readings = readings.filter((x) => x.id !== deleting.id);
+    change(deleting, true);
     openId = null;
     persist(); closeSheet(); renderAll(); toast('Deleted');
   });
@@ -721,7 +856,11 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
     if (!editing) return;
     const { sys, dia, pul, bad } = readFields('e-');
     if (bad.length) return flag('e-', bad);
-    Object.assign(editing, { sys, dia, pulse: pul, note: $('#e-note').value.trim(), t: fromLocalInput($('#e-when').value) ?? editing.t });
+    // sync may have swapped in fresh objects while the sheet was open, so edit by id
+    let r = readings.find((x) => x.id === editing.id);
+    if (!r) readings.push((r = editing));
+    Object.assign(r, { sys, dia, pulse: pul, note: $('#e-note').value.trim(), t: fromLocalInput($('#e-when').value) ?? r.t });
+    change(r);
     openId = null;
     persist(); closeSheet(); renderAll(); toast('Updated');
   });
@@ -773,8 +912,8 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
     const ps = rs.map((r) => r.pulse).filter(Boolean);
     const hiR = rs.reduce((a, r) => (r.sys > a.sys ? r : a)), loR = rs.reduce((a, r) => (r.sys < a.sys ? r : a));
     const boxes = [
-      ['AVERAGE', `${avg(rs.map((r) => r.sys))}/${avg(rs.map((r) => r.dia))}`, 'mmHg'],
-      ['AVG PULSE', ps.length ? String(avg(ps)) : '-', ps.length ? 'bpm' : ''],
+      ['BLOOD PRESSURE', `${avg(rs.map((r) => r.sys))}/${avg(rs.map((r) => r.dia))}`, 'mmHg'],
+      ['PULSE', ps.length ? String(avg(ps)) : '-', ps.length ? 'bpm' : ''],
       ['HIGHEST', `${hiR.sys}/${hiR.dia}`, 'mmHg'],
       ['LOWEST', `${loR.sys}/${loR.dia}`, 'mmHg'],
     ];
@@ -858,61 +997,120 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
     return true;
   }
 
-  // ---------- backup / restore ----------
-  const BK = 'bp.backup.v1';
-  function backupInfo() { try { return JSON.parse(localStorage.getItem(BK)) || null; } catch { return null; } }
-  function renderBackup() {
-    const b = backupInfo();
-    // due: readings exist that are newer than the last backup
-    const due = readings.length > 0 && (!b || readings.some((r) => r.id && !b.ids.includes(r.id)) || readings.length !== b.ids.length);
-    $('#bk-save').classList.toggle('due', due && readings.length > 0);
-    $('#bk-when').textContent = b ? 'Last backup ' + ago(b.t).replace(/^Just now$/, 'just now') : '';
+  // ---------- account + cloud sync ----------
+  // The phone keeps a local copy (works offline); every change is queued and
+  // pushed to the server, and the server's full list comes back each time.
+  const UKEY = 'bp.user.v1', PKEY = 'bp.pending.v1';
+  let user = null, pending = {}, syncState = 'ok', syncing = false, again = false, st;
+  try { user = JSON.parse(localStorage.getItem(UKEY)); } catch {}
+  try { pending = JSON.parse(localStorage.getItem(PKEY)) || {}; } catch {}
+  const savePending = () => { try { localStorage.setItem(PKEY, JSON.stringify(pending)); } catch {} };
+  const hasPending = () => Object.keys(pending).length > 0;
+
+  function change(r, deleted = false) {
+    r.u = Date.now();
+    pending[r.id] = deleted ? { ...r, deleted: true } : { ...r };
+    savePending(); setSync('saving'); syncSoon();
   }
-  $('#bk-save').addEventListener('click', async () => {
-    if (!readings.length) return toast('Nothing to back up');
-    const data = JSON.stringify({ app: 'bp-log', version: 1, exported: new Date().toISOString(), readings }, null, 1);
-    const ok = await saveFile(new Blob([data], { type: 'application/json' }), `bp-log-backup-${stamp()}.json`, 'application/json');
-    if (!ok) return;
-    try { localStorage.setItem(BK, JSON.stringify({ t: Date.now(), ids: readings.map((r) => r.id) })); } catch {}
-    renderBackup();
-  });
-  $('#bk-load').addEventListener('click', () => { $('#bk-file').value = ''; $('#bk-file').click(); });
-  $('#bk-file').addEventListener('change', async (e) => {
-    const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    let list;
+  function syncSoon(ms = 400) { clearTimeout(st); st = setTimeout(sync, ms); }
+
+  async function sync() {
+    if (!user) return;
+    if (syncing) { again = true; return; }
+    syncing = true;
+    const me = user, batch = Object.values(pending);
     try {
-      const j = JSON.parse(await f.text());
-      list = Array.isArray(j) ? j : j.readings;
-      if (!Array.isArray(list)) throw 0;
-    } catch { return toast('Not a backup file'); }
-    const have = new Set(readings.map((r) => r.id));
-    const seen = new Set(readings.map((r) => r.t + '|' + r.sys + '|' + r.dia));
-    let added = 0;
-    for (const r of list) {
-      const sys = +r.sys, dia = +r.dia, t = +r.t;
-      if (!(sys >= 50 && sys <= 300 && dia >= 25 && dia <= 200 && t > 0)) continue;
-      const id = typeof r.id === 'string' && r.id ? r.id : uid();
-      if (have.has(id) || seen.has(t + '|' + sys + '|' + dia)) continue;
-      const pulse = +r.pulse >= 20 && +r.pulse <= 260 ? +r.pulse : null;
-      readings.push({ id, t, sys, dia, pulse, note: typeof r.note === 'string' ? r.note.slice(0, 140) : '' });
-      have.add(id); seen.add(t + '|' + sys + '|' + dia); added++;
+      const res = await fetch('api/sync', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ user: user.id, changes: batch }),
+      });
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      if (user !== me) return; // signed out (or switched) while this was in flight
+      for (const c of batch) if (pending[c.id] && pending[c.id].u === c.u) delete pending[c.id];
+      savePending();
+      const map = new Map(data.readings.map((r) => [r.id, r]));
+      for (const p of Object.values(pending)) p.deleted ? map.delete(p.id) : map.set(p.id, p);
+      const next = [...map.values()].map(({ deleted, ...r }) => r).sort((a, b) => b.t - a.t);
+      const sig = (a) => a.map((r) => r.id + ':' + r.u).join(',');
+      if (sig(next) !== sig(readings)) { readings = next; persist(); renderAll(); }
+      setSync(hasPending() ? 'saving' : 'ok');
+      if (hasPending()) again = true;
+    } catch {
+      if (user === me) setSync(navigator.onLine ? 'error' : 'offline');
+    } finally {
+      syncing = false;
+      if (again && user) { again = false; syncSoon(1500); }
     }
-    persist(); renderAll(); renderHist(); renderBackup();
-    toast(added ? `Restored ${added}` : 'Already up to date');
+  }
+
+  const SYNC_TEXT = { ok: 'Saved to cloud', saving: 'Saving…', offline: 'Offline · saves when back online', error: "Couldn't reach the cloud · will retry" };
+  function setSync(state) {
+    syncState = state;
+    $('#me').classList.toggle('pending', hasPending());
+    $('#a-stat').textContent = SYNC_TEXT[state];
+  }
+
+  function showWelcome() {
+    $('#welcome').hidden = false;
+    $('#w-name').value = '';
+  }
+  async function login() {
+    const name = $('#w-name').value.trim().replace(/\s+/g, ' ');
+    if (!name) { const el = $('#w-name'); el.classList.remove('bad'); void el.offsetWidth; el.classList.add('bad'); return el.focus(); }
+    const go = $('#w-go'); go.disabled = true; go.textContent = '…';
+    try {
+      const res = await fetch('api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name }) });
+      if (!res.ok) throw new Error(res.status);
+      const u = await res.json();
+      user = { id: u.id, name: u.name };
+      try { localStorage.setItem(UKEY, JSON.stringify(user)); } catch {}
+      // readings logged before cloud saving existed get uploaded once
+      if (readings.length && !hasPending()) readings.forEach((r) => change(r));
+      document.activeElement && document.activeElement.blur();
+      $('#welcome').hidden = true;
+      renderMe(); sync();
+      toast(u.created ? `Hi, ${u.name.split(' ')[0]}` : `Welcome back, ${u.name.split(' ')[0]}`);
+    } catch {
+      toast(navigator.onLine ? 'Try again' : 'No connection');
+    } finally {
+      go.disabled = false; go.textContent = 'Continue';
+    }
+  }
+  $('#w-go').addEventListener('click', login);
+  $('#w-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); login(); } });
+
+  function renderMe() { $('#me').textContent = user ? (user.name.trim()[0] || '?').toUpperCase() : ''; }
+  $('#me').addEventListener('click', () => {
+    if (!user) return;
+    $('#a-name').textContent = user.name;
+    setSync(syncState);
+    $('#scrim').classList.add('on'); $('#acct').classList.add('on');
+    sync();
   });
+  $('#a-close').addEventListener('click', closeSheet);
+  $('#a-out').addEventListener('click', async () => {
+    if (hasPending()) { await sync(); if (hasPending()) return toast('Not saved yet'); }
+    user = null; readings = []; pending = {};
+    try { [UKEY, PKEY, KEY].forEach((k) => localStorage.removeItem(k)); } catch {}
+    closeSheet(); renderMe(); renderAll(); renderHist(); showWelcome();
+  });
+
+  addEventListener('online', () => sync());
+  setInterval(() => { if (document.visibilityState === 'visible') sync(); }, 60000);
 
   // ---------- boot ----------
   // iOS only applies :active (the pressed look) when a touch listener exists
   document.addEventListener('touchstart', () => {}, { passive: true });
-  function renderAll() { renderLast(); renderBackup(); if ($('#v-hist').classList.contains('on')) renderHist(); }
+  function renderAll() { renderLast(); if ($('#v-hist').classList.contains('on')) renderHist(); }
   $('#today').textContent = fDay.format(Date.now());
-  resetWhen(); renderAll(); renderHist();
+  resetWhen(); renderAll(); renderHist(); renderMe();
+  if (user) { setSync(hasPending() ? 'saving' : 'ok'); sync(); } else showWelcome();
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
     $('#today').textContent = fDay.format(Date.now());
     if (!whenTouched) resetWhen();
-    renderAll();
+    renderAll(); sync();
   });
   let rw; addEventListener('resize', () => { clearTimeout(rw); rw = setTimeout(() => { if ($('#v-hist').classList.contains('on')) renderChart(inRange()); }, 150); });
 

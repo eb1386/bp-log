@@ -1,0 +1,11 @@
+{
+  "name": "bp-log",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "migrate": "node --env-file=.env.local db/migrate.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.0"
+  }
+}
