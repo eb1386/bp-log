@@ -391,15 +391,6 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
       </button>
     </div>
 
-    <div class="card" id="lastCard" hidden>
-      <div class="last">
-        <div>
-          <div class="k">LAST READING</div>
-          <div class="v" id="lastV"></div>
-          <div class="when" id="lastW"></div>
-        </div>
-      </div>
-    </div>
   </section>
 
   <!-- HISTORY -->
@@ -421,9 +412,9 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
 
     <div id="histBody">
       <div class="card stats">
-        <div><div class="k">BLOOD PRESSURE</div><div class="v" id="avgBp">–</div></div>
-        <div><div class="k">PULSE</div><div class="v" id="avgP">–</div></div>
-        <div><div class="k">COUNT</div><div class="v" id="cnt">0</div></div>
+        <div><div class="k">AVG. BP</div><div class="v" id="avgBp">–</div></div>
+        <div><div class="k">AVG. PULSE</div><div class="v" id="avgP">–</div></div>
+        <div><div class="k">RECORDS</div><div class="v" id="cnt">0</div></div>
       </div>
       <div class="card chart" id="chartCard">
         <div class="chead">
@@ -634,13 +625,8 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
     toast('Saved');
   });
 
-  function renderLast() {
-    const r = readings[0];
-    $('#lastCard').hidden = !r;
-    if (!r) return;
-    $('#lastV').innerHTML = `${r.sys}/${r.dia}` + (r.pulse ? `<span>${r.pulse} bpm</span>` : '');
-    $('#lastW').textContent = ago(r.t);
-  }
+  function renderLast() {}
+
 
   // ---------- history view ----------
   let range = 30;
@@ -912,8 +898,8 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
     const ps = rs.map((r) => r.pulse).filter(Boolean);
     const hiR = rs.reduce((a, r) => (r.sys > a.sys ? r : a)), loR = rs.reduce((a, r) => (r.sys < a.sys ? r : a));
     const boxes = [
-      ['BLOOD PRESSURE', `${avg(rs.map((r) => r.sys))}/${avg(rs.map((r) => r.dia))}`, 'mmHg'],
-      ['PULSE', ps.length ? String(avg(ps)) : '-', ps.length ? 'bpm' : ''],
+      ['AVG. BP', `${avg(rs.map((r) => r.sys))}/${avg(rs.map((r) => r.dia))}`, 'mmHg'],
+      ['AVG. PULSE', ps.length ? String(avg(ps)) : '-', ps.length ? 'bpm' : ''],
       ['HIGHEST', `${hiR.sys}/${hiR.dia}`, 'mmHg'],
       ['LOWEST', `${loR.sys}/${loR.dia}`, 'mmHg'],
     ];
