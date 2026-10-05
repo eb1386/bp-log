@@ -211,14 +211,39 @@ input[type="datetime-local"]::-webkit-date-and-time-value { text-align: left; }
 
 .day { font-size: 14px; font-weight: 800; color: var(--muted); margin: 26px 6px 12px; letter-spacing: .02em; }
 .day:first-child { margin-top: 4px; }
+.rec { margin-bottom: 14px; border-radius: 22px; box-shadow: var(--raise-sm); transition: box-shadow .2s; }
+.rec.open { box-shadow: var(--inset-sm); }
 .item {
   width: 100%; text-align: left;
   display: flex; align-items: center; gap: 14px;
-  padding: 16px 18px; margin-bottom: 14px;
-  border-radius: 22px; box-shadow: var(--raise-sm);
+  padding: 16px 18px; border-radius: 22px;
+}
+.racts { display: none; justify-content: flex-end; gap: 16px; padding: 2px 18px 16px; }
+.rec.open .racts { display: flex; animation: fade .18s ease; }
+.ico {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: grid; place-items: center;
+  box-shadow: var(--raise-sm); color: var(--accent);
   transition: box-shadow .15s;
 }
-.item:active { box-shadow: var(--inset-sm); }
+.ico:active { box-shadow: var(--inset-sm); }
+.ico svg { width: 22px; height: 22px; }
+.ico.del { color: var(--danger); }
+
+.confirm {
+  position: fixed; z-index: 22; left: 50%; top: 50%;
+  width: min(calc(100% - 48px), 360px);
+  transform: translate(-50%, -46%) scale(.96); opacity: 0; pointer-events: none;
+  transition: transform .22s ease, opacity .22s ease;
+  background: var(--bg); border-radius: 28px; padding: 26px 20px 20px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.25);
+  text-align: center;
+}
+.confirm.on { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
+.confirm h2 { margin: 0; font-size: 21px; font-weight: 800; }
+.confirm p { margin: 6px 0 22px; color: var(--muted); font-weight: 700; font-size: 15px; }
+.confirm .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.btn.danger-fill { color: #fff; background: var(--danger); }
 .item .bp { font-size: 24px; font-weight: 800; min-width: 92px; }
 .item .meta { flex: 1; min-width: 0; }
 .item .t { font-size: 15px; font-weight: 700; }
@@ -226,6 +251,15 @@ input[type="datetime-local"]::-webkit-date-and-time-value { text-align: left; }
 .item .p { font-size: 15px; font-weight: 700; color: var(--muted); white-space: nowrap; }
 .item .p svg { width: 13px; height: 13px; vertical-align: -1px; margin-right: 3px; color: var(--c-stage2); }
 .empty { text-align: center; color: var(--muted); font-weight: 700; padding: 40px 0; }
+
+.backup { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 30px; }
+.backup .btn { height: 56px; font-size: 16px; color: var(--accent); position: relative; }
+.backup .btn svg { width: 20px; height: 20px; }
+.backup .btn.due::after {
+  content: ""; position: absolute; top: 12px; right: 14px;
+  width: 9px; height: 9px; border-radius: 50%; background: var(--c-stage1);
+}
+.bk-when { text-align: center; color: var(--muted); font-size: 13px; font-weight: 700; margin-top: 14px; }
 
 /* tab bar */
 nav.tabs {
@@ -245,6 +279,7 @@ nav.tabs button {
 }
 nav.tabs button svg { width: 22px; height: 22px; }
 nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
+
 
 /* sheet */
 .scrim {
@@ -351,6 +386,19 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
       <div id="list"></div>
     </div>
     <div class="empty" id="empty" hidden>No readings</div>
+
+    <div class="backup">
+      <button class="btn" id="bk-save">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>
+        Backup
+      </button>
+      <button class="btn" id="bk-load">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>
+        Restore
+      </button>
+    </div>
+    <div class="bk-when" id="bk-when"></div>
+    <input type="file" id="bk-file" accept="application/json,.json" hidden>
   </section>
 </main>
 
@@ -378,8 +426,17 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
     <input class="field" id="e-note" type="text" placeholder="Note" maxlength="140" autocomplete="off" enterkeyhint="done">
   </div>
   <div class="acts">
-    <button class="btn danger" id="e-del">Delete</button>
+    <button class="btn" id="e-cancel">Cancel</button>
     <button class="btn primary" id="e-save">Save</button>
+  </div>
+</div>
+
+<div class="confirm" id="confirm" role="alertdialog" aria-modal="true" aria-labelledby="cf-t">
+  <h2 id="cf-t">Delete reading?</h2>
+  <p id="cf-d"></p>
+  <div class="acts">
+    <button class="btn" id="cf-no">Cancel</button>
+    <button class="btn danger-fill" id="cf-yes">Delete</button>
   </div>
 </div>
 
@@ -565,18 +622,28 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
       const dl = dayLabel(r.t);
       if (dl !== last) { html += `<div class="day">${dl}</div>`; last = dl; }
       const c = cat(r.sys, r.dia);
-      html += `<button class="item" data-id="${r.id}">
+      html += `<div class="rec${r.id === openId ? ' open' : ''}" data-id="${r.id}"><button class="item">
         <i class="dot" style="background:${c.color}"></i>
         <div class="bp">${r.sys}/${r.dia}</div>
         <div class="meta"><div class="t">${fTime.format(r.t)}</div>${r.note ? `<div class="n">${esc(r.note)}</div>` : `<div class="n">${c.label}</div>`}</div>
         ${r.pulse ? `<div class="p">${heart}${r.pulse}</div>` : ''}
-      </button>`;
+      </button><div class="racts">
+        <button class="ico edit" aria-label="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></button>
+        <button class="ico del" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>
+      </div></div>`;
     }
     $('#list').innerHTML = html;
   }
+  // tap a record to reveal edit / delete
+  let openId = null;
   $('#list').addEventListener('click', (e) => {
-    const b = e.target.closest('.item');
-    if (b) openSheet(b.dataset.id);
+    const rec = e.target.closest('.rec');
+    if (!rec) return;
+    const id = rec.dataset.id;
+    if (e.target.closest('.edit')) return openSheet(id);
+    if (e.target.closest('.del')) return askDelete(id);
+    openId = openId === id ? null : id;
+    $$('#list .rec').forEach((x) => x.classList.toggle('open', x.dataset.id === openId));
   });
 
   function renderChart(rs) {
@@ -613,21 +680,35 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
   }
 
   // ---------- edit sheet ----------
-  let editing = null, delArmed = false;
+  let editing = null, deleting = null;
   function openSheet(id) {
     const r = readings.find((x) => x.id === id);
     if (!r) return;
-    editing = r; delArmed = false;
-    $('#e-del').textContent = 'Delete';
+    editing = r;
     $('#e-sys').value = r.sys; $('#e-dia').value = r.dia; $('#e-pul').value = r.pulse || '';
     $('#e-when').value = toLocalInput(r.t); $('#e-note').value = r.note || '';
     $('#scrim').classList.add('on'); $('#sheet').classList.add('on');
   }
   function closeSheet() {
     document.activeElement && document.activeElement.blur();
-    $('#scrim').classList.remove('on'); $('#sheet').classList.remove('on');
-    editing = null;
+    $('#scrim').classList.remove('on'); $('#sheet').classList.remove('on'); $('#confirm').classList.remove('on');
+    editing = null; deleting = null;
   }
+  $('#e-cancel').addEventListener('click', closeSheet);
+  function askDelete(id) {
+    const r = readings.find((x) => x.id === id);
+    if (!r) return;
+    deleting = r;
+    $('#cf-d').textContent = `${r.sys}/${r.dia}  ·  ${dayLabel(r.t)}, ${fTime.format(r.t)}`;
+    $('#scrim').classList.add('on'); $('#confirm').classList.add('on');
+  }
+  $('#cf-no').addEventListener('click', closeSheet);
+  $('#cf-yes').addEventListener('click', () => {
+    if (!deleting) return;
+    readings = readings.filter((x) => x !== deleting);
+    openId = null;
+    persist(); closeSheet(); renderAll(); toast('Deleted');
+  });
   $('#scrim').addEventListener('click', closeSheet);
   wireNums('e-');
   $('#e-note').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
@@ -636,13 +717,8 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
     const { sys, dia, pul, bad } = readFields('e-');
     if (bad.length) return flag('e-', bad);
     Object.assign(editing, { sys, dia, pulse: pul, note: $('#e-note').value.trim(), t: fromLocalInput($('#e-when').value) ?? editing.t });
+    openId = null;
     persist(); closeSheet(); renderAll(); toast('Updated');
-  });
-  $('#e-del').addEventListener('click', () => {
-    if (!editing) return;
-    if (!delArmed) { delArmed = true; $('#e-del').textContent = 'Confirm'; return; }
-    readings = readings.filter((x) => x !== editing);
-    persist(); closeSheet(); renderAll(); toast('Deleted');
   });
   // swipe sheet down to close
   (() => {
@@ -755,19 +831,75 @@ nav.tabs button.on { box-shadow: var(--inset-sm); color: var(--accent); }
       doc.text(`Page ${p} of ${pages}`, PW - M, PH - 24, { align: 'right' });
     }
 
+    await saveFile(doc.output('blob'), `blood-pressure-${stamp()}.pdf`, 'application/pdf');
+  });
+
+  // ---------- files ----------
+  function stamp() {
     const d = new Date();
-    const name = `blood-pressure-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.pdf`;
-    const file = new File([doc.output('blob')], name, { type: 'application/pdf' });
-    const touch = matchMedia('(pointer: coarse)').matches;
-    if (touch && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file] }); return; }
-      catch (e) { if (e && e.name === 'AbortError') return; }
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  // iPhone: share sheet (Save to Files / iCloud Drive). Elsewhere: download.
+  // Resolves true unless the share sheet was dismissed.
+  async function saveFile(blob, name, type) {
+    const file = new File([blob], name, { type });
+    if (matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return true; }
+      catch (e) { if (e && e.name === 'AbortError') return false; }
     }
-    doc.save(name);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(file); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    return true;
+  }
+
+  // ---------- backup / restore ----------
+  const BK = 'bp.backup.v1';
+  function backupInfo() { try { return JSON.parse(localStorage.getItem(BK)) || null; } catch { return null; } }
+  function renderBackup() {
+    const b = backupInfo();
+    // due: readings exist that are newer than the last backup
+    const due = readings.length > 0 && (!b || readings.some((r) => r.id && !b.ids.includes(r.id)) || readings.length !== b.ids.length);
+    $('#bk-save').classList.toggle('due', due && readings.length > 0);
+    $('#bk-when').textContent = b ? 'Last backup ' + ago(b.t).replace(/^Just now$/, 'just now') : '';
+  }
+  $('#bk-save').addEventListener('click', async () => {
+    if (!readings.length) return toast('Nothing to back up');
+    const data = JSON.stringify({ app: 'bp-log', version: 1, exported: new Date().toISOString(), readings }, null, 1);
+    const ok = await saveFile(new Blob([data], { type: 'application/json' }), `bp-log-backup-${stamp()}.json`, 'application/json');
+    if (!ok) return;
+    try { localStorage.setItem(BK, JSON.stringify({ t: Date.now(), ids: readings.map((r) => r.id) })); } catch {}
+    renderBackup();
+  });
+  $('#bk-load').addEventListener('click', () => { $('#bk-file').value = ''; $('#bk-file').click(); });
+  $('#bk-file').addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    let list;
+    try {
+      const j = JSON.parse(await f.text());
+      list = Array.isArray(j) ? j : j.readings;
+      if (!Array.isArray(list)) throw 0;
+    } catch { return toast('Not a backup file'); }
+    const have = new Set(readings.map((r) => r.id));
+    const seen = new Set(readings.map((r) => r.t + '|' + r.sys + '|' + r.dia));
+    let added = 0;
+    for (const r of list) {
+      const sys = +r.sys, dia = +r.dia, t = +r.t;
+      if (!(sys >= 50 && sys <= 300 && dia >= 25 && dia <= 200 && t > 0)) continue;
+      const id = typeof r.id === 'string' && r.id ? r.id : uid();
+      if (have.has(id) || seen.has(t + '|' + sys + '|' + dia)) continue;
+      const pulse = +r.pulse >= 20 && +r.pulse <= 260 ? +r.pulse : null;
+      readings.push({ id, t, sys, dia, pulse, note: typeof r.note === 'string' ? r.note.slice(0, 140) : '' });
+      have.add(id); seen.add(t + '|' + sys + '|' + dia); added++;
+    }
+    persist(); renderAll(); renderHist(); renderBackup();
+    toast(added ? `Restored ${added}` : 'Already up to date');
   });
 
   // ---------- boot ----------
-  function renderAll() { renderLast(); if ($('#v-hist').classList.contains('on')) renderHist(); }
+  function renderAll() { renderLast(); renderBackup(); if ($('#v-hist').classList.contains('on')) renderHist(); }
   $('#today').textContent = fDay.format(Date.now());
   resetWhen(); renderAll(); renderHist();
   document.addEventListener('visibilitychange', () => {
